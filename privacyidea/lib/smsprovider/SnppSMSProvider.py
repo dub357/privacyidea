@@ -14,15 +14,14 @@ except ImportError as exx:
 
 from privacyidea.lib import _
 
-
+import traceback
 import logging
 log = logging.getLogger(__name__)
 
+PHONE_TAG = "<phone>"
+MSG_TAG = "<otp>"
 
 class SnppSMSProvider(ISMSProvider):
-    def __init__(self, db_smsprovider_object=None, smsgateway=None):
-        if not SNPP_SUPPORT:
-            raise SMSError(-1, "SNPP Error: no snpp library installed")
 
     def submit_message(self, phone, message):
         """
@@ -32,6 +31,9 @@ class SnppSMSProvider(ISMSProvider):
         :param message: the message to submit to the phone
         :return:
         """
+        if not SNPP_SUPPORT:
+            raise SMSError(-1, "SNPP Error: no snpp library installed")
+
         if not self.smsgateway:
             # this should not happen. We now always use sms gateway definitions.
             log.warning("Missing smsgateway definition!")
@@ -65,8 +67,8 @@ class SnppSMSProvider(ISMSProvider):
         error_message = None 
         try:
             client = SNPP(None, None, 1)
-            log.debug("connecting to %r:%r", smsc_host, smsc_port)
-            client.connect(smsc_host, smsc_port)
+            log.debug("connecting to %s:%s", smsc_host, smsc_port)
+            client.connect(smsc_host, int(smsc_port))
             log.debug("connected!")
 
             log.debug("login with %s %s", username, passwd)
@@ -81,7 +83,7 @@ class SnppSMSProvider(ISMSProvider):
             client.message(body)
             client.send()
 
-        except Exception as exx:
+        except Exception as err:
             error_message = "{0!r}".format(err)
             log.warning("Failed to send message: {0!r}".format(error_message))
             log.debug("{0!s}".format(traceback.format_exc()))
